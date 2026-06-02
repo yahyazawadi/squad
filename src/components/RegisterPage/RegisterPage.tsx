@@ -131,6 +131,7 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState(1); // 1 = Register Form, 2 = OTP Verification
   const [loading, setLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [sentOtp, setSentOtp] = useState('');
@@ -157,9 +158,13 @@ export default function RegisterPage() {
       setError('Please provide all required fields');
       return;
     }
-    setLoading(true);
+    
+    // 🚀 Snippy UX: Instantly transition to OTP step
+    setStep(2);
+    setRegisterLoading(true);
     setError('');
     setMessage('');
+    setSentOtp('');
 
     try {
       const response = await api.post('/auth/register', { email, username, password, birthdate });
@@ -169,15 +174,18 @@ export default function RegisterPage() {
           setSentOtp(data.otp);
         }
         setMessage(data.message || 'OTP sent to email. Please verify.');
-        setStep(2);
       } else {
+        // Revert back to form step to display error
+        setStep(1);
         setError(data.error || data.message || 'Registration failed');
       }
     } catch (err: any) {
+      // Revert back to form step to display error
+      setStep(1);
       const errMsg = err.response?.data?.error || err.response?.data?.message || 'Connection failed. Is the server running?';
       setError(errMsg);
     } finally {
-      setLoading(false);
+      setRegisterLoading(false);
     }
   };
 
@@ -324,8 +332,8 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="register-btn" disabled={loading} style={{ marginTop: '20px' }}>
-                  {loading ? 'Sending the email...' : 'Register'}
+                <button type="submit" className="register-btn" disabled={registerLoading} style={{ marginTop: '20px' }}>
+                  {registerLoading ? 'Sending the email...' : 'Register'}
                 </button>
 
                 <p className="login-text" style={{ marginTop: '12px' }}>
@@ -340,10 +348,16 @@ export default function RegisterPage() {
                 <h1 className="register-title" style={{ color: '#23a55a' }}>Verify your email</h1>
                 <p className="register-subtitle" style={{ fontSize: '15px', marginTop: '10px', color: 'rgba(194, 206, 214, 0.70)' }}>
                   We sent a 6-digit code to <strong>{email}</strong>
-                  {sentOtp && (
+                  {sentOtp ? (
                     <span style={{ display: 'block', marginTop: '8px', color: '#14AC7B', fontWeight: '500' }}>
                       Verification Code: <strong style={{ color: '#ffffff', letterSpacing: '1px', fontSize: '16px' }}>{sentOtp}</strong>
                     </span>
+                  ) : (
+                    registerLoading && (
+                      <span className="otp-generating-loader" style={{ display: 'block', marginTop: '8px', color: '#14AC7B', fontWeight: '500' }}>
+                        Generating verification code...
+                      </span>
+                    )
                   )}
                 </p>
               </div>
@@ -370,21 +384,32 @@ export default function RegisterPage() {
                       maxLength={6}
                       placeholder={sentOtp || "e.g. 123456"}
                       value={otp}
+                      disabled={registerLoading}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // numbers only
                       required
                     />
                   </div>
                 </div>
 
-                <button type="submit" className="register-btn" disabled={loading} style={{ marginTop: '20px' }}>
-                  {loading ? 'Verifying...' : 'Verify & Complete'}
+                <button type="submit" className="register-btn" disabled={loading || registerLoading} style={{ marginTop: '20px' }}>
+                  {registerLoading ? 'Preparing verification...' : loading ? 'Verifying...' : 'Verify & Complete'}
                 </button>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '12px' }}>
-                  <a href="#" onClick={handleResendOtp} className="login-link" style={{ fontSize: '14px' }}>
+                  <a 
+                    href="#" 
+                    onClick={registerLoading ? (e) => e.preventDefault() : handleResendOtp} 
+                    className="login-link" 
+                    style={{ fontSize: '14px', opacity: registerLoading ? 0.5 : 1, cursor: registerLoading ? 'not-allowed' : 'pointer' }}
+                  >
                     Resend Code
                   </a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); setStep(1); }} className="login-link" style={{ fontSize: '14px', color: '#c2ced6' }}>
+                  <a 
+                    href="#" 
+                    onClick={registerLoading ? (e) => e.preventDefault() : (e) => { e.preventDefault(); setStep(1); }} 
+                    className="login-link" 
+                    style={{ fontSize: '14px', color: '#c2ced6', opacity: registerLoading ? 0.5 : 1, cursor: registerLoading ? 'not-allowed' : 'pointer' }}
+                  >
                     Back
                   </a>
                 </div>
