@@ -49,21 +49,23 @@ const sendEmail = async (options) => {
       console.error(`[EMAIL ERROR] Failed to send email via SMTP:`, err.message);
       console.log('Falling back to console-logging the OTP code...');
       // Fallback log
-      console.log('\n======================================================');
+      console.log('\n🌟=================== [PRODUCTION TEST MODE] ===================🌟');
       console.log(`📧  FALLBACK EMAIL DISPATCH TO: ${options.email}`);
       console.log(`📝  SUBJECT: ${options.subject}`);
-      console.log('------------------------------------------------------');
-      console.log(options.text);
-      console.log('======================================================\n');
+      console.log('-----------------------------------------------------------------');
+      console.log(`⚡  SECURITY OTP BYPASS INJECTED:`);
+      console.log(`    ${options.text}`);
+      console.log('🌟==============================================================🌟\n');
     }
   } else {
     // Console log fallback for easy local testing
-    console.log('\n======================================================');
+    console.log('\n🌟=================== [LOCAL DEVELOPMENT MODE] =================🌟');
     console.log(`📧  MOCK EMAIL DISPATCH TO: ${options.email}`);
     console.log(`📝  SUBJECT: ${options.subject}`);
-    console.log('------------------------------------------------------');
-    console.log(options.text);
-    console.log('======================================================\n');
+    console.log('-----------------------------------------------------------------');
+    console.log(`⚡  LOCAL SECURITY OTP BYPASS:`);
+    console.log(`    ${options.text}`);
+    console.log('🌟==============================================================🌟\n');
   }
 };
 
