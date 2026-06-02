@@ -13,14 +13,27 @@ const sendEmail = async (options) => {
 
   if (isSmtpConfigured) {
     try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT, 10),
+      const transportConfig = {
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
-      });
+      };
+
+      if (process.env.SMTP_HOST && process.env.SMTP_HOST.includes('gmail')) {
+        transportConfig.service = 'gmail';
+      } else {
+        transportConfig.host = process.env.SMTP_HOST;
+        transportConfig.port = parseInt(process.env.SMTP_PORT, 10);
+        transportConfig.secure = parseInt(process.env.SMTP_PORT, 10) === 465;
+      }
+
+      // Add TLS configuration to handle local development loops safely
+      transportConfig.tls = {
+        rejectUnauthorized: false
+      };
+
+      const transporter = nodemailer.createTransport(transportConfig);
 
       const mailOptions = {
         from: `"Discord Clone" <${process.env.SMTP_USER}>`,

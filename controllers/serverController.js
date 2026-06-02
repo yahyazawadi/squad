@@ -368,17 +368,22 @@ export const leaveServer = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Owners cannot leave their own server' });
     }
 
-    // Remove user
-    server.members = server.members.filter(
-      (m) => m.user.toString() !== req.user._id.toString()
+    // Remove member and admin atomically to prevent Mongoose array reference issues
+    await Server.updateOne(
+      { _id: serverId },
+      { 
+        $pull: { 
+          members: { user: req.user._id },
+          admins: req.user._id 
+        }
+      }
     );
 
-    // Remove admin status if any
-    server.admins = server.admins.filter(
-      (adminId) => adminId.toString() !== req.user._id.toString()
-    );
-
-    await server.save();
+    // Emit socket event to notify client of left server
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('user_removed_from_server', { serverId, userId: req.user._id.toString(), action: 'left' });
+    }
 
     res.status(200).json({ success: true, message: 'Left server successfully' });
   } catch (error) {
@@ -882,6 +887,12 @@ export const deleteServer = async (req, res) => {
 
     // Delete the server itself
     await server.deleteOne();
+
+    // Emit socket event to notify all connected clients
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('server_deleted', { serverId });
+    }
 
     res.status(200).json({ success: true, message: 'Server deleted successfully' });
   } catch (error) {
