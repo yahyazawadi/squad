@@ -1,5 +1,5 @@
 # wrangler.toml - Cloudflare Workers Configuration for Squad Backend
-name = "squad-server"
+name = "squad"
 main = "index.js"
 compatibility_date = "2025-09-01"
 compatibility_flags = [ "nodejs_compat", "nodejs_compat_populate_process_env" ]
